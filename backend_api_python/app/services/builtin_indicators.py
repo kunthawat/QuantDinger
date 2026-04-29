@@ -1,7 +1,8 @@
 """
-新用户注册时写入内置示例指标（可自由修改、删除）。
+Built-in sample indicators written for new users on registration (editable/deletable).
 
-通过首条示例名称做幂等：已存在则跳过，避免重复调用 create_user 等边界情况重复插入。
+Idempotent via the first indicator's name: skips if it already exists, avoiding
+duplicate insert edge cases with create_user etc.
 """
 
 from __future__ import annotations
@@ -15,13 +16,13 @@ logger = get_logger(__name__)
 
 
 def _builtin_specs() -> List[Dict[str, str]]:
-    """内置指标：name / description / code（与指标 IDE、回测引擎约定一致）。"""
+    """Built-in indicators: name / description / code (matches indicator IDE and backtest engine contract)."""
     return [
         {
-            "name": "[示例] RSI 边缘触发",
-            "description": "经典 RSI 超卖反弹买入、超买回落卖出；信号为「当根刚触发」避免重复开仓。适合熟悉回测面板与 @strategy。",
-            "code": r'''my_indicator_name = "[示例] RSI 边缘触发"
-my_indicator_description = "RSI 超卖/超买 + 边缘触发；可在回测面板调杠杆、周期与标的。"
+            "name": "[Sample] RSI Edge Trigger",
+            "description": "Classic RSI oversold bounce buy and overbought reversal sell. Signal fires on bar-close to avoid duplicate entries. Good for learning the backtest panel and @strategy.",
+            "code": r'''my_indicator_name = "[Sample] RSI Edge Trigger"
+my_indicator_description = "RSI oversold/overbought with edge trigger; adjust leverage, timeframe and symbol in the backtest panel."
 
 # @strategy stopLossPct 0.03
 # @strategy takeProfitPct 0.06
@@ -62,10 +63,10 @@ output = {
 ''',
         },
         {
-            "name": "[示例] 双均线金叉死叉",
-            "description": "快线上穿慢线做多，下穿做空；参数可直接在代码里改 fast/slow 周期。",
-            "code": r'''my_indicator_name = "[示例] 双均线金叉死叉"
-my_indicator_description = "快慢均线交叉；边缘触发。杠杆、手续费等在回测面板设置。"
+            "name": "[Sample] Dual MA Crossover",
+            "description": "Buy when fast MA crosses above slow MA, sell on the reverse. Edit fast/slow periods directly in the code.",
+            "code": r'''my_indicator_name = "[Sample] Dual MA Crossover"
+my_indicator_description = "Fast/slow MA crossover; edge trigger. Leverage and fees are set in the backtest panel."
 
 # @strategy stopLossPct 0.025
 # @strategy takeProfitPct 0.05
@@ -100,10 +101,10 @@ output = {
 ''',
         },
         {
-            "name": "[示例] MACD 柱穿零轴",
-            "description": "MACD 柱状线由负转正试多，由正转负试空；适合观察动量切换。",
-            "code": r'''my_indicator_name = "[示例] MACD 柱穿零轴"
-my_indicator_description = "DIF/DEA/柱；柱线穿越零轴边缘触发。可与 1H/4H 加密合约回测配合。"
+            "name": "[Sample] MACD Histogram Zero Cross",
+            "description": "Go long when MACD histogram crosses above zero; go short when it crosses below. Useful for observing momentum shifts.",
+            "code": r'''my_indicator_name = "[Sample] MACD Histogram Zero Cross"
+my_indicator_description = "DIF/DEA/Hist; histogram crossing zero axis with edge trigger. Pairs well with 1H/4H crypto futures backtest."
 
 # @strategy stopLossPct 0.03
 # @strategy takeProfitPct 0.08
@@ -140,10 +141,10 @@ output = {
 ''',
         },
         {
-            "name": "[示例] 布林带触及",
-            "description": "收盘价跌破下轨产生买入信号，突破上轨产生卖出信号（边缘触发）。",
-            "code": r'''my_indicator_name = "[示例] 布林带触及"
-my_indicator_description = "简单布林带反转思路示例；实盘请结合趋势过滤与风控。"
+            "name": "[Sample] Bollinger Band Touch",
+            "description": "Buy when close touches the lower band, sell on upper band touch (edge trigger). For backtesting only — add trend filter and risk management for live trading.",
+            "code": r'''my_indicator_name = "[Sample] Bollinger Band Touch"
+my_indicator_description = "Simple Bollinger Band reversal sample; combine with trend filter and risk management for live trading."
 
 # @strategy stopLossPct 0.02
 # @strategy takeProfitPct 0.04
@@ -171,9 +172,9 @@ sell_marks = [df['high'].iloc[i] * 1.005 if bool(sell.iloc[i]) else None for i i
 output = {
     'name': my_indicator_name,
     'plots': [
-        {'name': 'BOLL 上', 'data': upper.tolist(), 'color': '#69c0ff', 'overlay': True},
-        {'name': 'BOLL 中', 'data': mid.tolist(), 'color': '#d9d9d9', 'overlay': True},
-        {'name': 'BOLL 下', 'data': lower.tolist(), 'color': '#69c0ff', 'overlay': True}
+        {'name': 'BOLL Upper', 'data': upper.tolist(), 'color': '#69c0ff', 'overlay': True},
+        {'name': 'BOLL Mid', 'data': mid.tolist(), 'color': '#d9d9d9', 'overlay': True},
+        {'name': 'BOLL Lower', 'data': lower.tolist(), 'color': '#69c0ff', 'overlay': True}
     ],
     'signals': [
         {'type': 'buy', 'text': 'B', 'data': buy_marks, 'color': '#00E676'},
@@ -186,7 +187,7 @@ output = {
 
 
 # 与 _builtin_specs()[0]["name"] 一致，用于注册时幂等判断
-_BUILTIN_PACK_ANCHOR_NAME = "[示例] RSI 边缘触发"
+_BUILTIN_PACK_ANCHOR_NAME = "[Sample] RSI Edge Trigger"
 
 
 def seed_builtin_indicators_for_new_user(db: Any, user_id: int) -> int:

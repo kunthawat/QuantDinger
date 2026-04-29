@@ -37,43 +37,43 @@ class PolymarketBatchAnalyzer:
             # 1. 构建批量分析的prompt
             markets_summary = self._build_markets_summary(markets)
             
-            prompt = f"""你是一个专业的预测市场分析师。请分析以下预测市场列表，筛选出最有交易机会的市场。
+            prompt = f"""You are a professional prediction market analyst. Analyze the following list of prediction markets and filter for the best trading opportunities.
 
-市场列表：
+Markets:
 {markets_summary}
 
-请基于以下维度评估每个市场：
-1. **市场活跃度**：交易量、流动性是否足够
-2. **概率偏差**：当前市场概率是否偏离合理预期（偏离50%越多，机会越大）
-3. **事件重要性**：事件对市场的影响程度
-4. **时间窗口**：距离结算时间是否合适（太近或太远都不好）
-5. **信息优势**：是否有明显的信息不对称或市场误判
+Evaluate each market based on these dimensions:
+1. **Market Activity**: Is trading volume and liquidity sufficient?
+2. **Probability Divergence**: Is the current market probability deviating from a reasonable expectation? (Deviation from 50%, the larger the better)
+3. **Event Importance**: How significant is the event's impact?
+4. **Time Window**: Is the time until settlement appropriate (not too close or too far)?
+5. **Information Edge**: Is there obvious information asymmetry or market mispricing?
 
-请返回JSON格式，包含筛选出的市场ID和简要分析：
+Return JSON format with filtered market IDs and brief analysis:
 {{
     "opportunities": [
         {{
-            "market_id": "市场ID",
-            "opportunity_score": 85,  // 机会评分 0-100
-            "reason": "为什么这个市场有交易机会（简要说明）",
-            "recommendation": "YES/NO/HOLD",  // 推荐方向
-            "confidence": 75,  // 置信度 0-100
-            "key_factors": ["因素1", "因素2"]  // 关键因素
+            "market_id": "market_id",
+            "opportunity_score": 85,  // Opportunity score 0-100
+            "reason": "Why this market has trading opportunity (brief explanation)",
+            "recommendation": "YES/NO/HOLD",  // Recommended direction
+            "confidence": 75,  // Confidence level 0-100
+            "key_factors": ["Factor 1", "Factor 2"]  // Key factors
         }}
     ]
 }}
 
-要求：
-- 只返回最有价值的 {max_opportunities} 个机会
-- 机会评分 >= 60 才考虑
-- 优先选择：高交易量 + 明显概率偏差 + 高置信度
-- 简要说明原因，不要冗长"""
-            
-            # 2. 调用LLM进行批量分析
+Requirements:
+- Return only the top {max_opportunities} opportunities
+- Only consider opportunities with score >= 60
+- Prioritize: high volume + clear probability divergence + high confidence
+- Keep explanations brief, do not be verbose"""
+
+            # 2. Call LLM for batch analysis
             messages = [
                 {
                     "role": "system",
-                    "content": "你是一个专业的预测市场分析师，擅长从大量市场中快速识别有价值的交易机会。请客观、理性地分析，只推荐真正有优势的机会。"
+                    "content": "You are a professional prediction market analyst skilled at quickly identifying valuable trading opportunities from a large set of markets. Be objective and rational. Only recommend truly advantageous opportunities."
                 },
                 {
                     "role": "user",
