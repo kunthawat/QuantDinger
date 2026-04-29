@@ -14,3 +14,10 @@ QuantDinger-Vue-src/
 # Backend & DB not needed for frontend stage
 backend_api_python
 docker-compose.override.yml
+
+# Exception — root Dockerfile (all-in-one) needs these paths
+!backend_api_python/
+!backend_api_python/migrations/
+!backend_api_python/docker-entrypoint.sh
+!docs/
+!scripts/
