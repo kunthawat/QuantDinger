@@ -131,17 +131,18 @@ class SignalNotifier:
     """
     Notify signal events across channels.
 
-    通知配置说明:
-    - 用户在个人中心配置自己的通知设置（telegram_bot_token, telegram_chat_id, email 等）
-    - 创建策略/监控时，系统自动使用用户配置的通知目标
+    Notification config:
+    - Users configure their own notification targets in profile settings
+      (telegram_bot_token, telegram_chat_id, email, etc.)
+    - When creating strategies/monitoring, system uses the user's configured targets.
 
-    公共服务配置（管理员在系统设置中配置）:
+    Public service config (configured by admin in system settings):
     - SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SMTP_USE_TLS
-      (邮件服务，所有用户共用)
+      (email service, shared by all users)
     - TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
-      (短信服务，所有用户共用)
+      (SMS service, shared by all users)
 
-    可选的环境变量:
+    Optional environment variables:
     - SIGNAL_NOTIFY_TIMEOUT_SEC: HTTP timeout (default: 6)
     """
 
@@ -151,7 +152,7 @@ class SignalNotifier:
         except Exception:
             self.timeout_sec = 6.0
 
-        # 公共 SMTP 配置（管理员在系统设置中配置）
+        # Public SMTP config (configured by admin in system settings)
         self.smtp_host = (os.getenv("SMTP_HOST") or "").strip()
         try:
             self.smtp_port = int(os.getenv("SMTP_PORT") or "587")
@@ -549,15 +550,15 @@ class SignalNotifier:
         """
         Generic webhook delivery.
 
-        用户在个人中心配置：
-        - webhook_url: Webhook 地址
-        - webhook_token: Bearer Token（可选）
+        Configured by user in profile settings:
+        - webhook_url: Webhook URL
+        - webhook_token: Bearer Token (optional)
 
-        支持功能：
-        - 自定义 headers: notification_config.targets.webhook_headers
+        Supported features:
+        - Custom headers: notification_config.targets.webhook_headers
         - Bearer Token: notification_config.targets.webhook_token
-        - 签名验证: notification_config.targets.webhook_signing_secret
-        - 自动重试: 429/5xx 时重试一次
+        - Signature verification: notification_config.targets.webhook_signing_secret
+        - Auto retry: on 429/5xx, one retry
         """
         if not url:
             return False, "missing_webhook_url"
@@ -711,10 +712,10 @@ class SignalNotifier:
         token_override: str = "",
         parse_mode: str = "",
     ) -> Tuple[bool, str]:
-        # 用户必须在个人中心配置自己的 telegram_bot_token
+        # User must configure their own telegram_bot_token in profile settings
         token = (token_override or "").strip()
         if not token:
-            return False, "missing_telegram_bot_token (请在个人中心配置 Telegram Bot Token)"
+            return False, "missing_telegram_bot_token (configure Telegram Bot Token in profile settings)"
         if not chat_id:
             return False, "missing_telegram_chat_id"
         url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -815,9 +816,10 @@ class SignalNotifier:
         """
         lang = (language or "en-US").strip().lower()
         zh = lang.startswith("zh")
-        title = "QuantDinger 通知测试" if zh else "QuantDinger notification test"
+        title = "QuantDinger Notification Test" if zh else "QuantDinger notification test"
         plain = (
-            "这是一条来自 QuantDinger 个人中心「通知设置」的测试消息。若您收到本条消息，说明该渠道配置正确。"
+            "This is a test message from QuantDinger profile notification settings. "
+            "If you received this, the channel is configured correctly."
             if zh
             else "This is a test message from QuantDinger profile notification settings. "
             "If you received this, the channel is configured correctly."

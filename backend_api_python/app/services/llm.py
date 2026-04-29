@@ -230,11 +230,11 @@ class LLMService:
             if "openrouter" in (base_url or "").lower():
                 from app.config.api_keys import APIKeys
                 if not APIKeys.OPENROUTER_API_KEY:
-                    error_msg += ". OPENROUTER_API_KEY 未配置，请在 backend_api_python/.env 中设置"
+                    error_msg += ". OPENROUTER_API_KEY not configured. Set it in backend_api_python/.env"
                 elif response.status_code == 403:
-                    error_msg += ". 可能原因：API 密钥无效/过期、余额不足、或无模型权限。请检查 https://openrouter.ai/keys"
+                    error_msg += ". Possible causes: invalid/expired API key, insufficient balance, or no model permissions. Check https://openrouter.ai/keys"
                 elif response.status_code == 404:
-                    error_msg += ". 可能原因：模型不可用或账户隐私/数据策略限制。请检查 https://openrouter.ai/settings/privacy"
+                    error_msg += ". Possible causes: model unavailable or account privacy/data policy restrictions. Check https://openrouter.ai/settings/privacy"
 
             raise ValueError(error_msg)
         
@@ -432,8 +432,8 @@ class LLMService:
         base_url = self.get_base_url(p)
         if p == LLMProvider.CUSTOM and not (base_url or "").strip():
             raise ValueError(
-                "Custom LLM base URL 未配置：请在后台设置或 .env 中填写 CUSTOM_API_URL "
-                "（须为 OpenAI 兼容网关的根地址，例如 https://api.example.com/v1）。"
+                "Custom LLM base URL not configured. Set CUSTOM_API_URL in backend settings or .env "
+                "(must be the root URL of an OpenAI-compatible gateway, e.g. https://api.example.com/v1)."
             )
 
         # Normalize model name for the provider

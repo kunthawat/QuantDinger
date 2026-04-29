@@ -1,6 +1,6 @@
 """
-安全的代码执行工具
-提供超时、资源限制、沙箱环境和子进程隔离
+Safe code execution utilities.
+Provides timeout, resource limits, sandbox environment, and subprocess isolation.
 """
 import signal
 import sys
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 class TimeoutError(Exception):
-    """代码执行超时异常"""
+    """Timeout exception for code execution"""
     pass
 
 
@@ -97,17 +97,18 @@ def build_safe_builtins(extra_allowed: Optional[Set[str]] = None) -> Dict[str, A
 @contextmanager
 def timeout_context(seconds: int):
     """
-    代码执行超时上下文管理器
+    Timeout context manager for code execution.
 
-    - Unix 主线程: signal.SIGALRM
-    - Windows / 非主线程: threading.Timer + ctypes 异常注入
+    Uses different backends depending on platform/thread:
+    - Unix main thread: signal.SIGALRM
+    - Windows / non-main thread: threading.Timer + ctypes exception injection
     """
     is_main_thread = threading.current_thread() is threading.main_thread()
 
     # Strategy 1: Unix SIGALRM (most reliable, main thread only)
     if sys.platform != 'win32' and is_main_thread:
         def timeout_handler(signum, frame):
-            raise TimeoutError(f"代码执行超时（超过{seconds}秒）")
+            raise TimeoutError(f"Code execution timed out (exceeded {seconds}s)")
         try:
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(seconds)
@@ -149,7 +150,7 @@ def timeout_context(seconds: int):
     finally:
         timer.cancel()
         if timed_out.is_set():
-            raise TimeoutError(f"代码执行超时（超过{seconds}秒）")
+            raise TimeoutError(f"Code execution timed out (exceeded {seconds}s)")
 
 
 # ── Core execution ─────────────────────────────────────────────────────────
@@ -162,14 +163,14 @@ def safe_exec_code(
     max_memory_mb: Optional[int] = None
 ) -> Dict[str, Any]:
     """
-    安全执行Python代码（当前进程内，带超时）
+    Execute Python code safely (in-process, with timeout).
 
     Args:
-        code: 要执行的Python代码
-        exec_globals: 全局变量字典
-        exec_locals: 局部变量字典（如果为None，则使用exec_globals）
-        timeout: 超时时间（秒），默认30秒
-        max_memory_mb: 最大内存限制（MB），默认500MB
+        code: Python code to execute
+        exec_globals: Global variables dict
+        exec_locals: Local variables dict (if None, uses exec_globals)
+        timeout: Timeout in seconds, default 30s
+        max_memory_mb: Max memory limit in MB, default 500MB
     """
     if exec_locals is None:
         exec_locals = exec_globals
@@ -192,14 +193,14 @@ def safe_exec_code(
         return {'success': True, 'error': None, 'result': None}
 
     except MemoryError:
-        error_msg = f"代码执行内存不足（超过{max_memory_mb}MB限制）"
+        error_msg = f"Code execution ran out of memory (exceeded {max_memory_mb}MB limit)"
         logger.error(f"Code execution out of memory (limit={max_memory_mb}MB)")
         return {'success': False, 'error': error_msg, 'result': None}
     except TimeoutError as e:
         logger.error(f"Code execution timed out (timeout={timeout}s)")
         return {'success': False, 'error': str(e), 'result': None}
     except Exception as e:
-        error_msg = f"代码执行错误: {str(e)}\n{traceback.format_exc()}"
+        error_msg = f"Code execution error: {str(e)}\n{traceback.format_exc()}"
         logger.error(f"Code execution error: {e}")
         return {'success': False, 'error': error_msg, 'result': None}
 
@@ -332,23 +333,23 @@ def safe_exec_isolated(
         proc.join(timeout=5)
         return {
             'success': False,
-            'error': f"代码执行超时（超过{timeout}秒），子进程已终止",
+            'error': f"Code execution timed out (exceeded {timeout}s), subprocess terminated",
             'result': None,
         }
 
     if proc.exitcode != 0 and not parent_conn.poll():
         return {
             'success': False,
-            'error': f"子进程异常退出 (exit code: {proc.exitcode})",
+            'error': f"Subprocess exited abnormally (exit code: {proc.exitcode})",
             'result': None,
         }
 
     try:
         if parent_conn.poll(timeout=1):
             return parent_conn.recv()
-        return {'success': False, 'error': "子进程未返回结果", 'result': None}
+        return {'success': False, 'error': "Subprocess returned no result", 'result': None}
     except Exception as e:
-        return {'success': False, 'error': f"读取子进程结果失败: {e}", 'result': None}
+        return {'success': False, 'error': f"Failed to read subprocess result: {e}", 'result': None}
     finally:
         parent_conn.close()
 
@@ -357,7 +358,7 @@ def safe_exec_isolated(
 
 def validate_code_safety(code: str) -> Tuple[bool, Optional[str]]:
     """
-    验证代码安全性（正则 + AST 双重检查）
+    Validate code safety (regex + AST dual check).
     """
     import ast
     import re
@@ -406,17 +407,17 @@ def validate_code_safety(code: str) -> Tuple[bool, Optional[str]]:
 
     for pattern in dangerous_patterns:
         if re.search(pattern, code):
-            return False, f"检测到危险代码模式: {pattern}"
+            return False, f"Dangerous code pattern detected: {pattern}"
 
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
         logger.warning(f"Code syntax validation failed: {e}")
-        return False, "代码语法错误"
+        return False, "Code has syntax error"
     except Exception as e:
         # AST parse failure → reject (fail-closed, not fail-open)
         logger.exception("AST parse failed, rejecting code")
-        return False, "代码解析失败"
+        return False, "Code AST parse failed"
 
     dangerous_modules = {
         'os', 'sys', 'subprocess', 'shutil', 'signal', 'resource',
@@ -448,23 +449,23 @@ def validate_code_safety(code: str) -> Tuple[bool, Optional[str]]:
             for alias in node.names:
                 root = alias.name.split('.')[0]
                 if root not in SAFE_IMPORT_MODULES:
-                    return False, f"不允许导入模块 '{alias.name}'，仅允许: {', '.join(sorted(SAFE_IMPORT_MODULES))}"
+                    return False, f"Import of '{alias.name}' not allowed. Allowed modules: {', '.join(sorted(SAFE_IMPORT_MODULES))}"
 
         elif isinstance(node, ast.ImportFrom):
             if node.module:
                 root = node.module.split('.')[0]
                 if root not in SAFE_IMPORT_MODULES:
-                    return False, f"不允许导入模块 '{node.module}'，仅允许: {', '.join(sorted(SAFE_IMPORT_MODULES))}"
+                    return False, f"Import from '{node.module}' not allowed. Allowed modules: {', '.join(sorted(SAFE_IMPORT_MODULES))}"
 
         elif isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and node.func.id in dangerous_call_names:
-                return False, f"检测到危险函数调用: {node.func.id}()"
+                return False, f"Dangerous function call detected: {node.func.id}()"
             if isinstance(node.func, ast.Attribute):
                 if isinstance(node.func.value, ast.Name) and node.func.value.id in dangerous_modules:
-                    return False, f"检测到危险模块调用: {node.func.value.id}.{node.func.attr}"
+                    return False, f"Dangerous module call detected: {node.func.value.id}.{node.func.attr}"
 
         elif isinstance(node, ast.Attribute):
             if isinstance(node.attr, str) and node.attr in dangerous_dunder_attrs:
-                return False, f"检测到访问危险属性: .{node.attr}"
+                return False, f"Dangerous attribute access detected: .{node.attr}"
 
     return True, None
