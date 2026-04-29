@@ -79,15 +79,24 @@ class CacheManager:
             import redis
             from app.config import RedisConfig
 
-            self._client = redis.Redis(
-                host=RedisConfig.HOST,
-                port=RedisConfig.PORT,
-                db=RedisConfig.DB,
-                password=RedisConfig.PASSWORD,
-                decode_responses=True,
-                socket_connect_timeout=RedisConfig.CONNECT_TIMEOUT,
-                socket_timeout=RedisConfig.SOCKET_TIMEOUT
-            )
+            if RedisConfig.URL:
+                self._client = redis.from_url(
+                    RedisConfig.URL,
+                    db=RedisConfig.DB,
+                    decode_responses=True,
+                    socket_connect_timeout=RedisConfig.CONNECT_TIMEOUT,
+                    socket_timeout=RedisConfig.SOCKET_TIMEOUT
+                )
+            else:
+                self._client = redis.Redis(
+                    host=RedisConfig.HOST,
+                    port=RedisConfig.PORT,
+                    db=RedisConfig.DB,
+                    password=RedisConfig.PASSWORD,
+                    decode_responses=True,
+                    socket_connect_timeout=RedisConfig.CONNECT_TIMEOUT,
+                    socket_timeout=RedisConfig.SOCKET_TIMEOUT
+                )
             self._client.ping()
             self._use_redis = True
             logger.info("Redis cache connected")

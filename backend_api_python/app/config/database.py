@@ -4,32 +4,36 @@
 import os
 
 class MetaRedisConfig(type):
-    """Redis 配置"""
-    
+    """Redis 配置 — 支持 REDIS_URL（优先）或独立参数"""
+
+    @property
+    def URL(cls):
+        return os.getenv('REDIS_URL', None)
+
     @property
     def HOST(cls):
         return os.getenv('REDIS_HOST', 'localhost')
-    
+
     @property
     def PORT(cls):
         return int(os.getenv('REDIS_PORT', 6379))
-    
+
     @property
     def PASSWORD(cls):
         return os.getenv('REDIS_PASSWORD', None)
-    
+
     @property
     def DB(cls):
         return int(os.getenv('REDIS_DB', 0))
-    
+
     @property
     def CONNECT_TIMEOUT(cls):
         return int(os.getenv('REDIS_CONNECT_TIMEOUT', 5))
-    
+
     @property
     def SOCKET_TIMEOUT(cls):
         return int(os.getenv('REDIS_SOCKET_TIMEOUT', 5))
-    
+
     @property
     def MAX_CONNECTIONS(cls):
         return int(os.getenv('REDIS_MAX_CONNECTIONS', 10))
