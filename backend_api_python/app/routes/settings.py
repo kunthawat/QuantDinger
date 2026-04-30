@@ -16,8 +16,8 @@ logger = get_logger(__name__)
 
 settings_bp = Blueprint('settings', __name__)
 
-# .env 文件路径
-ENV_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+# .env file path — matches where entrypoint.sh creates it (/app/.env)
+ENV_FILE_PATH = '/app/.env'
 
 
 def _reload_runtime_env() -> None:
