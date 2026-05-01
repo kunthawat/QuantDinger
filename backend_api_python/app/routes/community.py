@@ -1,7 +1,6 @@
 """
-Community APIs - 指标社区接口
-
-提供指标市场、购买、评论等功能的 REST API。
+Community APIs - indicator marketplace, purchases, comments.
+Set COMMUNITY_ENABLED=false to disable all community endpoints.
 """
 
 from flask import Blueprint, jsonify, request, g
@@ -13,6 +12,14 @@ from app.services.community_service import get_community_service
 logger = get_logger(__name__)
 
 community_bp = Blueprint("community", __name__)
+
+
+@community_bp.before_request
+def _check_community_enabled():
+    """Return 403 if community feature is disabled via env var."""
+    import os as _os
+    if not _os.getenv('COMMUNITY_ENABLED', 'true').lower() in ('true', '1', 'yes'):
+        return jsonify({'code': 0, 'msg': 'Community feature is disabled'}), 403
 
 
 # ==========================================

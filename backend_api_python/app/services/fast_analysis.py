@@ -501,14 +501,14 @@ class FastAnalysisService:
         news_summary = self._format_news_summary(data.get("news") or [])
         polymarket_events = data.get("polymarket") or []
         
-        # Language instruction - MUST be enforced strictly
+        # Language instruction — always respond in the user's requested language
         lang_map = {
-            'zh-CN': '⚠️ 重要：你必须用简体中文回答所有内容，包括summary、key_reasons、risks等所有文本字段。不要使用英文。',
-            'zh-TW': '⚠️ 重要：你必須用繁體中文回答所有內容，包括summary、key_reasons、risks等所有文本字段。不要使用英文。',
-            'en-US': '⚠️ IMPORTANT: You MUST answer ALL content in English, including summary, key_reasons, risks, and all text fields. Do NOT use Chinese.',
-            'ja-JP': '⚠️ 重要：すべての内容を日本語で回答してください。summary、key_reasons、risksなど、すべてのテキストフィールドを日本語で記述してください。',
+            'zh-CN': 'Respond in Simplified Chinese.',
+            'zh-TW': 'Respond in Traditional Chinese.',
+            'en-US': 'Respond in English.',
+            'ja-JP': 'Respond in Japanese.',
         }
-        lang_instruction = lang_map.get(language, '⚠️ IMPORTANT: Answer ALL content in English.')
+        lang_instruction = lang_map.get(language, 'Respond in English.')
         
         # Get pre-calculated trading levels from technical analysis
         levels = indicators.get("levels", {})

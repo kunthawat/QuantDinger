@@ -20,17 +20,21 @@ settings_bp = Blueprint('settings', __name__)
 ENV_FILE_PATH = '/app/.env'
 
 
-def _reload_runtime_env() -> None:
+def _reload_runtime_env(override: bool = True) -> None:
     """
     Reload .env into current process so settings take effect immediately.
     Priority keeps backend_api_python/.env over repo-root/.env.
+
+    Args:
+        override: If True (default), .env file values overwrite existing OS env vars.
+                  If False, OS env vars take priority (useful when Easypanel injects vars).
     """
     backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     root_dir = os.path.dirname(backend_dir)
 
     # Load root first, then backend .env to keep backend file higher priority
-    load_dotenv(os.path.join(root_dir, '.env'), override=True)
-    load_dotenv(os.path.join(backend_dir, '.env'), override=True)
+    load_dotenv(os.path.join(root_dir, '.env'), override=override)
+    load_dotenv(os.path.join(backend_dir, '.env'), override=override)
 
 
 def _refresh_runtime_services() -> None:
@@ -1008,21 +1012,20 @@ def get_public_config():
 @login_required
 @admin_required
 def get_settings_values():
-    """获取当前配置值 - 包括敏感信息（真实值）(admin only)"""
-    env_values = read_env_file()
-    
-    # 构建返回数据，返回真实值
+    """Get current config values — admin only"""
+    # Build result: os.getenv takes priority (Easypanel-injected values),
+    # fallback to .env file for keys not in OS environment.
     result = {}
     for group_key, group in CONFIG_SCHEMA.items():
         result[group_key] = {}
         for item in group['items']:
             key = item['key']
-            value = env_values.get(key, item.get('default', ''))
+            value = os.getenv(key) or read_env_file().get(key, item.get('default', ''))
             result[group_key][key] = value
-            # 标记密码类型是否已配置
+            # Mark password fields as configured if they have a value
             if item['type'] == 'password':
-                result[group_key][f'{key}_configured'] = bool(value)
-    
+                result[group_key][f'{key}_configured'] = bool(value and value != item.get('default', ''))
+
     return jsonify({
         'code': 1,
         'msg': 'success',
