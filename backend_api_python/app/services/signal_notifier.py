@@ -358,6 +358,11 @@ class SignalNotifier:
         ts_disp = str(payload.get("timestamp_display") or "") or ts_iso
         ts_lbl = str(payload.get("time_label") or "Time")
 
+        extra = (payload or {}).get("extra") or {}
+        sl = float(extra.get("stop_loss_price") or 0.0)
+        tp = float(extra.get("take_profit_price") or 0.0)
+        trail = float(extra.get("trailing_stop_price") or 0.0)
+
         plain_lines = [
             "QuantDinger Signal",
             f"Strategy: {strategy.get('name') or ''} (#{int(strategy.get('id') or 0)})",
@@ -366,6 +371,12 @@ class SignalNotifier:
             f"Price: {price_s}",
             f"Stake: {stake_s}",
         ]
+        if sl > 0:
+            plain_lines.append(f"Entry: {price_s}  SL: {_fmt_float(sl)}")
+        if tp > 0:
+            plain_lines.append(f"TP: {_fmt_float(tp)}")
+        if trail > 0:
+            plain_lines.append(f"Trail: {_fmt_float(trail)}")
         if pending_id:
             plain_lines.append(f"PendingOrder: {pending_id}")
         if mode:
@@ -384,6 +395,12 @@ class SignalNotifier:
             f"<b>Price</b>: <code>{html.escape(price_s)}</code>",
             f"<b>Stake</b>: <code>{html.escape(stake_s)}</code>",
         ]
+        if sl > 0:
+            telegram_lines.append(f"<b>Entry</b>: <code>{html.escape(price_s)}</code>  <b>SL</b>: <code>{html.escape(_fmt_float(sl))}</code>")
+        if tp > 0:
+            telegram_lines.append(f"<b>TP</b>: <code>{html.escape(_fmt_float(tp))}</code>")
+        if trail > 0:
+            telegram_lines.append(f"<b>Trail</b>: <code>{html.escape(_fmt_float(trail))}</code>")
         if pending_id:
             telegram_lines.append(f"<b>PendingOrder</b>: <code>{pending_id}</code>")
         if mode:
@@ -430,6 +447,11 @@ class SignalNotifier:
         def esc(s: Any) -> str:
             return html.escape(str(s or ""))
 
+        extra = (payload or {}).get("extra") or {}
+        sl = float(extra.get("stop_loss_price") or 0.0)
+        tp = float(extra.get("take_profit_price") or 0.0)
+        trail = float(extra.get("trailing_stop_price") or 0.0)
+
         rows: List[Tuple[str, str]] = [
             ("Strategy", strategy_text),
             ("Symbol", symbol),
@@ -437,6 +459,13 @@ class SignalNotifier:
             ("Price", price_text),
             ("Stake", stake_text),
         ]
+        if sl > 0:
+            rows.append(("Entry", price_text))
+            rows.append(("SL", _fmt_float(sl)))
+        if tp > 0:
+            rows.append(("TP", _fmt_float(tp)))
+        if trail > 0:
+            rows.append(("Trail", _fmt_float(trail)))
         if pending_id:
             rows.append(("PendingOrder", str(int(pending_id))))
         if mode_text:
@@ -647,6 +676,12 @@ class SignalNotifier:
         if action in ("close", "reduce"):
             color = 0xE74C3C
 
+        extra = (payload or {}).get("extra") or {}
+        sl = float(extra.get("stop_loss_price") or 0.0)
+        tp = float(extra.get("take_profit_price") or 0.0)
+        trail = float(extra.get("trailing_stop_price") or 0.0)
+        ref_p = float(order.get("ref_price") or 0.0)
+
         embed: Dict[str, Any] = {
             "title": "QuantDinger Signal",
             "color": int(color),
@@ -654,10 +689,16 @@ class SignalNotifier:
                 {"name": "Strategy", "value": f"{strategy.get('name') or ''} (#{int(strategy.get('id') or 0)})", "inline": True},
                 {"name": "Symbol", "value": str(instrument.get("symbol") or ""), "inline": True},
                 {"name": "Signal", "value": str(sig.get("type") or ""), "inline": False},
-                {"name": "Price", "value": str(float(order.get('ref_price') or 0.0)), "inline": True},
-                {"name": "Stake", "value": str(float(order.get('stake_amount') or 0.0)), "inline": True},
+                {"name": "Price", "value": str(ref_p), "inline": True},
+                {"name": "Stake", "value": str(float(order.get("stake_amount") or 0.0)), "inline": True},
             ],
         }
+        if sl > 0:
+            embed["fields"].append({"name": "Entry / SL", "value": f"{ref_p:.6f} / {sl:.6f}", "inline": True})
+        if tp > 0:
+            embed["fields"].append({"name": "TP", "value": f"{tp:.6f}", "inline": True})
+        if trail > 0:
+            embed["fields"].append({"name": "Trail", "value": f"{trail:.6f}", "inline": True})
         if payload.get("timestamp_iso"):
             embed["timestamp"] = str(payload.get("timestamp_iso") or "")
         if trace.get("pending_order_id"):
